@@ -5,28 +5,24 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Briefcase, User, LogOut, Menu, X, ChevronRight, LogIn } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 export default function Navbar() {
-  const [user, setUser] = useState<{ fullName: string, role?: string } | null>(null);
+  const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) setUser(JSON.parse(storedUser));
-
     const handleScroll = () => {
         setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [pathname]);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    window.location.href = '/';
+    logout();
   };
 
   return (
@@ -53,7 +49,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-6">
           {user ? (
             <div className="flex items-center gap-6">
-              {(user.role === 'admin' || user.role === 'employer') && (
+              {user.role === 'admin' && (
                 <Link href="/admin" className="text-[11px] font-black uppercase tracking-widest text-apple-blue hover:text-white transition-colors bg-white/5 px-4 py-2 rounded-lg border border-apple-blue/20">
                   Quản lý
                 </Link>

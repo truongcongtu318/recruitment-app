@@ -5,92 +5,68 @@ import { useRouter } from 'next/navigation';
 import { 
   Users, Briefcase, FileText, Settings, 
   BarChart3, PieChart, Activity, Search,
-  Bell, ChevronRight, LogOut, ShieldCheck
+  Bell, ChevronRight, LogOut, ShieldCheck, Loader2
 } from 'lucide-react';
 
+import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { Job, Application } from '../types';
+
 export default function AdminDashboard() {
-  const [user, setUser] = useState<any>(null);
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [applications, setApplications] = useState<any[]>([]);
+  const { user, loading: authLoading, logout } = useAuth();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'jobs' | 'apps'>('overview');
   const router = useRouter();
 
   const fetchData = async () => {
-    const token = localStorage.getItem('token');
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
-    
     try {
       // Fetch Jobs
-      const jobsRes = await fetch(`${apiUrl.replace(/\/$/, '')}/jobs`);
-      const jobsData = await jobsRes.json();
-      setJobs(jobsData);
+      const jobsData = await api.get('/jobs?mine=true');
+      setJobs(Array.isArray(jobsData) ? jobsData : []);
 
       // Fetch Applications
-      const appsRes = await fetch(`${apiUrl.replace(/\/$/, '')}/admin/applications`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const appsData = await appsRes.json();
-      setApplications(appsData);
-    } catch (err) {
+      const appsData = await api.get('/admin/applications');
+      setApplications(Array.isArray(appsData) ? appsData : []);
+    } catch (err: any) {
       console.error('Fetch error:', err);
+      setJobs([]);
+      setApplications([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
+    // Wait for auth context to initialize
+    if (authLoading) return;
+
+    if (!user) {
       router.push('/login');
       return;
     }
-    const userData = JSON.parse(storedUser);
-    if (userData.role !== 'admin' && userData.role !== 'employer') {
+    if (user.role !== 'admin') {
       router.push('/');
       return;
     }
-    setUser(userData);
     fetchData();
-  }, [router]);
+  }, [user, authLoading, router]);
 
   const handleDeleteJob = async (id: number) => {
     if (!confirm('Bạn có chắc muốn xóa công việc này?')) return;
-    const token = localStorage.getItem('token');
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
-    
     try {
-      const res = await fetch(`${apiUrl.replace(/\/$/, '')}/jobs/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        setJobs(jobs.filter(j => j.id !== id));
-      }
+      await api.delete(`/jobs/${id}`);
+      setJobs(jobs.filter(j => j.id !== id));
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleUpdateStatus = async (id: string, status: string) => {
-    const token = localStorage.getItem('token');
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
-    
     try {
-      const res = await fetch(`${apiUrl.replace(/\/$/, '')}/admin/applications/${id}/status`, {
-        method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      });
-      if (res.ok) {
-        setApplications(applications.map(a => a.id === id ? { ...a, status } : a));
-      }
+      await api.put(`/admin/applications/${id}/status`, { status });
+      setApplications(applications.map(a => a.id === id ? { ...a, status } : a));
     } catch (err) {
       console.error(err);
     }
@@ -106,34 +82,32 @@ export default function AdminDashboard() {
   const handleAddJob = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const token = localStorage.getItem('token');
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
 
     try {
-      const res = await fetch(`${apiUrl.replace(/\/$/, '')}/jobs`, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newJob)
+      const addedJob = await api.post('/jobs', newJob);
+      setJobs([addedJob, ...jobs]);
+      setIsAddModalOpen(false);
+      setNewJob({
+        title: '', company: 'TN Recruitment', location: 'Remote', 
+        type: 'Full-time', salary: '', level: 'Middle', description: '', is_hot: false
       });
-      if (res.ok) {
-        const addedJob = await res.json();
-        setJobs([addedJob, ...jobs]);
-        setIsAddModalOpen(false);
-        setNewJob({
-          title: '', company: 'TN Recruitment', location: 'Remote', 
-          type: 'Full-time', salary: '', level: 'Middle', description: '', is_hot: false
-        });
-      }
     } catch (err) {
       console.error(err);
     } finally {
       setSubmitting(false);
     }
   };
+
+  const [expandedJobId, setExpandedJobId] = useState<number | null>(null);
+
+  if (authLoading || (loading && !user)) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-12 h-12 text-apple-blue animate-spin" />
+        <p className="text-white/40 font-bold text-xs uppercase tracking-widest animate-pulse">Đang xác thực quyền truy cập...</p>
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -229,7 +203,6 @@ export default function AdminDashboard() {
           {[
             { id: 'overview', label: 'Tổng quan', icon: BarChart3 },
             { id: 'jobs', label: 'Quản lý Công việc', icon: Briefcase },
-            { id: 'apps', label: 'Hồ sơ Ứng tuyển', icon: FileText },
           ].map((item) => (
             <button 
               key={item.id} 
@@ -244,10 +217,7 @@ export default function AdminDashboard() {
 
         <div className="pt-8 border-t border-white/5">
           <button 
-            onClick={() => {
-              localStorage.clear();
-              router.push('/login');
-            }}
+            onClick={logout}
             className="flex items-center gap-4 text-white/40 hover:text-red-500 transition-colors font-bold text-sm px-6"
           >
             <LogOut size={20} />
@@ -266,10 +236,7 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-6">
             <button 
-              onClick={() => {
-                localStorage.clear();
-                window.location.href = '/login';
-              }}
+              onClick={logout}
               className="flex items-center gap-3 px-6 py-3 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-bold text-sm"
             >
               <LogOut size={18} />
@@ -326,98 +293,120 @@ export default function AdminDashboard() {
                  + Thêm công việc
                </button>
             </div>
-            <div className="grid grid-cols-1 gap-4">
-               {jobs.map((job) => (
-                 <div key={job.id} className="glass-card p-8 flex items-center justify-between group">
-                    <div className="flex items-center gap-6">
-                       <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center font-black text-apple-blue">TN</div>
-                       <div>
-                          <h4 className="text-xl font-black text-white">{job.title}</h4>
-                          <p className="text-sm text-white/40 font-medium">{job.company} • {job.location}</p>
-                       </div>
-                    </div>
-                    <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <button className="p-3 rounded-xl bg-white/5 text-white hover:bg-white hover:text-black transition-all"><Settings size={18} /></button>
-                       <button 
-                         onClick={() => handleDeleteJob(job.id)}
-                         className="p-3 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                       >
-                         <LogOut size={18} className="rotate-90" />
-                       </button>
-                    </div>
-                 </div>
-               ))}
-            </div>
-          </div>
-        )}
+            
+            <div className="grid grid-cols-1 gap-6">
+               {jobs.map((job) => {
+                 const jobApps = applications.filter(a => a.job_id === job.id);
+                 const isExpanded = expandedJobId === job.id;
 
-        {activeTab === 'apps' && (
-          <div className="animate-in space-y-8">
-            <h2 className="text-3xl font-black tracking-tighter text-white">Hồ sơ Ứng tuyển</h2>
-            <div className="glass-card overflow-visible">
-               <table className="w-full text-left">
-                  <thead className="bg-white/5 border-b border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
-                     <tr>
-                        <th className="px-8 py-6">Ứng viên</th>
-                        <th className="px-8 py-6">Vị trí</th>
-                        <th className="px-8 py-6">Thời gian</th>
-                        <th className="px-8 py-6 text-right">Trạng thái & Thao tác</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                     {applications.map((app) => (
-                       <tr key={app.id} className="hover:bg-white/5 transition-colors relative hover:z-10">
-                          <td className="px-8 py-6">
-                             <div className="font-bold text-white">{app.full_name}</div>
-                             <div className="text-xs text-white/30">{app.email}</div>
-                          </td>
-                          <td className="px-8 py-6">
-                             <div className="font-bold text-white">{app.job_title}</div>
-                             <div className="text-[10px] text-white/30 font-black uppercase tracking-wider">{app.job_company}</div>
-                          </td>
-                          <td className="px-8 py-6 text-xs text-white/40 font-medium">
-                             {new Date(app.submitted_at).toLocaleDateString('vi-VN')}
-                          </td>
-                          <td className="px-8 py-6 text-right relative group/select">
-                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-all">
-                                <div className={`w-2 h-2 rounded-full ${
-                                  app.status === 'Accepted' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 
-                                  app.status === 'Rejected' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
-                                  app.status === 'Interviewing' ? 'bg-apple-blue shadow-[0_0_8px_rgba(0,113,227,0.6)]' : 'bg-white/40'
-                                }`}></div>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                                  {app.status === 'Pending' ? 'CHỜ DUYỆT' : 
-                                   app.status === 'Interviewing' ? 'PHỎNG VẤN' : 
-                                   app.status === 'Accepted' ? 'TRÚNG TUYỂN' : 'TỪ CHỐI'}
-                                </span>
-                             </div>
-                             
-                             <div className="absolute right-0 top-[110%] w-48 bg-black/95 backdrop-blur-xl p-2 border border-white/20 rounded-2xl opacity-0 invisible group-hover/select:opacity-100 group-hover/select:visible transition-all z-30 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                                {[
-                                  { id: 'Pending', label: 'Chờ duyệt', color: 'text-white/40' },
-                                  { id: 'Interviewing', label: 'Phỏng vấn', color: 'text-apple-blue' },
-                                  { id: 'Accepted', label: 'Trúng tuyển', color: 'text-green-500' },
-                                  { id: 'Rejected', label: 'Từ chối', color: 'text-red-500' },
-                                ].map((opt) => (
-                                  <button 
-                                    key={opt.id}
-                                    onClick={() => handleUpdateStatus(app.id, opt.id)}
-                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors text-left"
-                                  >
-                                    <div className={`w-1.5 h-1.5 rounded-full ${
-                                      opt.id === 'Accepted' ? 'bg-green-500' : 
-                                      opt.id === 'Rejected' ? 'bg-red-500' :
-                                      opt.id === 'Interviewing' ? 'bg-apple-blue' : 'bg-white/20'
-                                    }`}></div>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${opt.color}`}>{opt.label}</span>
-                                  </button>
-                                ))}
-                             </div>
-                          </td>
-                       </tr>
-                     ))}
-                  </tbody>
-               </table>
+                 return (
+                   <div key={job.id} className="glass-card overflow-hidden transition-all duration-500 border-white/5 hover:border-white/10">
+                      <div className="p-8 flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                           <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center font-black text-apple-blue text-xl">TN</div>
+                           <div>
+                              <h4 className="text-xl font-black text-white">{job.title}</h4>
+                              <p className="text-sm text-white/40 font-medium">{job.company} • {job.location}</p>
+                           </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-6">
+                           <button 
+                             onClick={() => setExpandedJobId(isExpanded ? null : job.id)}
+                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${jobApps.length > 0 ? (isExpanded ? 'bg-white text-black' : 'bg-apple-blue/20 text-apple-bright-blue hover:bg-apple-blue hover:text-white') : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
+                           >
+                             {jobApps.length} ỨNG VIÊN
+                             <ChevronRight className={`w-3 h-3 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                           </button>
+
+                           <div className="flex items-center gap-2">
+                              <button className="p-3 rounded-xl bg-white/5 text-white/40 hover:text-white transition-all"><Settings size={18} /></button>
+                              <button 
+                                onClick={() => handleDeleteJob(job.id)}
+                                className="p-3 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                              >
+                                <LogOut size={18} className="rotate-90" />
+                              </button>
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* Applications List (Expanded) */}
+                      {isExpanded && (
+                        <div className="bg-white/[0.02] border-t border-white/5 p-8 animate-in slide-in-from-top-4 duration-500">
+                           <div className="space-y-4">
+                              <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-6">Danh sách hồ sơ ứng tuyển</h5>
+                              
+                              {jobApps.length === 0 ? (
+                                <p className="text-white/20 text-sm italic py-4">Chưa có ứng viên nào ứng tuyển vị trí này.</p>
+                              ) : (
+                                <div className="space-y-3">
+                                  {jobApps.map((app) => (
+                                    <div key={app.id} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl hover:bg-white/[0.08] transition-all border border-white/5">
+                                       <div className="flex items-center gap-6">
+                                          <div className="w-10 h-10 rounded-full bg-apple-blue/10 flex items-center justify-center font-black text-apple-blue text-xs">
+                                             {app.full_name.charAt(0)}
+                                          </div>
+                                          <div>
+                                             <div className="font-bold text-white text-sm">{app.full_name}</div>
+                                             <div className="text-[10px] text-white/30 font-medium">{app.email} • {new Date(app.submitted_at).toLocaleDateString('vi-VN')}</div>
+                                          </div>
+                                       </div>
+
+                                       <div className="flex items-center gap-6">
+                                          {/* Status Selector */}
+                                          <div className="relative group/status">
+                                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${
+                                                  app.status === 'Accepted' ? 'bg-green-500' : 
+                                                  app.status === 'Rejected' ? 'bg-red-500' :
+                                                  app.status === 'Interviewing' ? 'bg-apple-blue' : 'bg-white/40'
+                                                }`}></div>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-white/60">{app.status}</span>
+                                             </div>
+                                             
+                                             <div className="absolute right-0 bottom-full mb-2 w-36 bg-black border border-white/10 rounded-xl opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-20 overflow-hidden shadow-2xl">
+                                                {['Pending', 'Interviewing', 'Accepted', 'Rejected'].map((s) => (
+                                                  <button 
+                                                    key={s}
+                                                    onClick={() => handleUpdateStatus(app.id, s)}
+                                                    className="w-full text-[9px] font-black uppercase tracking-widest px-4 py-3 hover:bg-white/10 text-white/60 hover:text-white text-left transition-colors"
+                                                  >
+                                                    {s}
+                                                  </button>
+                                                ))}
+                                             </div>
+                                          </div>
+
+                                          {/* CV Link */}
+                                          <div className="flex items-center w-24 justify-end">
+                                            {app.cv_url ? (
+                                              <a 
+                                                href={app.cv_url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-apple-blue text-white hover:bg-apple-bright-blue transition-all text-[9px] font-black uppercase tracking-widest whitespace-nowrap"
+                                              >
+                                                <FileText size={14} />
+                                                XEM CV
+                                              </a>
+                                            ) : (
+                                              <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic text-right">
+                                                Lỗi file
+                                              </span>
+                                            )}
+                                          </div>
+                                       </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                           </div>
+                        </div>
+                      )}
+                   </div>
+                 );
+               })}
             </div>
           </div>
         )}

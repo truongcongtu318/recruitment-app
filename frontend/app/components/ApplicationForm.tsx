@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Send, CheckCircle2, AlertCircle, FileUp, Loader2 } from 'lucide-react';
+import { api } from '../lib/api';
 
 interface ApplicationFormProps {
   jobId: number;
@@ -39,34 +40,24 @@ export default function ApplicationForm({ jobId }: ApplicationFormProps) {
     data.append('cv', file);
 
     try {
-      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
-      
-      const res = await fetch(`${apiUrl}/apply`, {
-        method: 'POST',
-        body: data,
-      });
-
-      const responseData = await res.json();
-
-      if (!res.ok) {
-        if (responseData.error === 'Validation failed' && responseData.details) {
-          const fieldErrors: Record<string, string> = {};
-          responseData.details.forEach((issue: any) => {
-            fieldErrors[issue.path[0]] = issue.message;
-          });
-          setErrors(fieldErrors);
-          setStatus('idle');
-          return;
-        }
-        throw new Error(responseData.error || 'Có lỗi xảy ra khi gửi hồ sơ.');
-      }
-      
+      await api.post('/apply', data, true);
       setStatus('success');
     } catch (error: any) {
       console.error("Submit error:", error);
+      // Handle validation errors (array of issues)
+      if (error.details && Array.isArray(error.details)) {
+        const fieldErrors: Record<string, string> = {};
+        error.details.forEach((issue: any) => {
+          fieldErrors[issue.path[0]] = issue.message;
+        });
+        setErrors(fieldErrors);
+        setStatus('idle');
+        return;
+      }
       setStatus('error');
-      setGeneralError(error.message);
+      // Handle string error details (like 'File too large')
+      const msg = typeof error.details === 'string' ? error.details : (error.message || 'Có lỗi xảy ra');
+      setGeneralError(msg);
     }
   };
 
