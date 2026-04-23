@@ -80,6 +80,13 @@ export async function initDB(): Promise<void> {
       );
     `);
 
+    // 4. Create Indexes
+    console.log('[DB] Ensuring indexes exist...');
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_jobs_level ON jobs(level);
+      CREATE INDEX IF NOT EXISTS idx_app_job_id ON applications(job_id);
+    `);
+
     await client.query('COMMIT');
     console.log('[DB] Database schema check complete.');
   } catch (err: any) {
