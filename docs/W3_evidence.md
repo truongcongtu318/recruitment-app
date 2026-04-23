@@ -155,6 +155,8 @@
   JOIN jobs j ON a.job_id = j.id
   ORDER BY a.submitted_at DESC
 ```
+![alt text](../images/image-15.png)
+- The query returns application information along with job metadata and sorts results by `submitted_at DESC`. Indexing jobs.id (primary key) and applications.job_id (foreign key) optimizes join performance, and indexing on applications.submitted_at can improve sorting efficiency for large datasets
 
 # 5. Lambda, Textract and Comprehend Evidence 
 ![alt text](../images/image-13.png)
