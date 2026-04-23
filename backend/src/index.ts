@@ -50,19 +50,22 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Bootstrap
 async function bootstrap() {
-  try {
-    await initDB();
+  // 1. Start listening IMMEDIATELY so ALB health checks pass
+  const server = app.listen(PORT, () => {
     console.log('-------------------------------------------');
     console.log('🚀 G12 RECRUITMENT BACKEND (TS) IS LIVE');
     console.log(`📡 Listening on port: ${PORT}`);
     console.log('-------------------------------------------');
-    
-    app.listen(PORT, () => {
-      // Server started
-    });
+  });
+
+  try {
+    // 2. Initialize DB and migrations in the background
+    console.log('[DB] Connecting to database...');
+    await initDB();
   } catch (err: any) {
-    console.error('❌ CRITICAL STARTUP FAILURE:', err.message);
-    process.exit(1);
+    console.error('❌ DATABASE INITIALIZATION FAILURE:', err.message);
+    // Note: We don't exit(1) here to allow the container to stay alive 
+    // for debugging or potential automatic recovery/retry.
   }
 }
 
