@@ -1,69 +1,184 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #3b82f6;
-  --color-deep-bg: #030712;
-  --color-card-bg: rgba(255, 255, 255, 0.03);
+  --color-apple-black: #000000;
+  --color-apple-gray: #121212;
+  --color-apple-near-black: #0a0a0a;
+  --color-apple-blue: #0071e3;
+  --color-apple-link-blue: #2997ff;
+  --color-apple-bright-blue: #00d2ff;
 }
 
 :root {
-  --font-inter: "Inter", sans-serif;
+  --background: #000000;
+  --foreground: #ffffff;
+  --apple-black: #000000;
+  --apple-gray: #121212;
+  --apple-near-black: #0a0a0a;
+  --apple-blue: #0071e3;
+  
+  --font-sf: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 body {
-  background-color: var(--color-deep-bg);
-  color: #f8fafc;
-  font-family: var(--font-inter);
-  min-height: 100vh;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(37, 99, 235, 0.1) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sf);
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
 }
 
-/* Glassmorphism utility */
+/* Base Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+/* Modern Effects */
 .glass {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+}
+
+/* Bento Grid System */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem;
+}
+
+.bento-item {
+  border-radius: 32px;
+  overflow: hidden;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #121212;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.glass-hover {
-  transition: all 0.3s ease;
+.bento-item:hover {
+  transform: scale(1.02);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(59, 130, 246, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+/* Logo Wordmark Styling */
+.logo-wordmark {
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  display: flex;
+  align-items: center;
+  line-height: 1;
 }
 
-/* Animation utilities */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+.logo-g12 {
+  color: #ffffff;
+  font-size: 1.5rem;
+}
+
+.logo-careers {
+  font-weight: 300;
+  color: #a1a1a1;
+  font-size: 1.5rem;
+  margin-left: 2px;
+}
+
+.logo-dot {
+  width: 5px;
+  height: 5px;
+  background-color: var(--apple-bright-blue);
+  border-radius: 50%;
+  margin-left: 3px;
+  margin-top: 8px;
+}
+
+/* Infinite Logo Carousel */
+.logo-carousel {
+  overflow: hidden;
+  padding: 60px 0;
+  white-space: nowrap;
+  position: relative;
+}
+
+.logo-track {
+  display: inline-flex;
+  animation: scroll 40s linear infinite;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.partner-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 40px;
+}
+
+/* Typography Classes */
+.display-hero {
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.section-heading {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.6s ease forwards;
+.animate-in {
+  animation: fadeInUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+.btn-primary {
+  background: #ffffff;
+  color: #000000;
+  padding: 12px 28px;
+  border-radius: 980px;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.3s ease;
 }
 
-::-webkit-scrollbar-track {
-  background: #030712;
+.btn-primary:hover {
+  transform: scale(1.05);
+  background: #f5f5f7;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
+.apple-nav {
+  height: 80px;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
+.apple-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
 }

@@ -5,6 +5,7 @@ import { initDB } from './config/db.js';
 import jobsRouter from './routes/jobs.js';
 import applyRouter from './routes/apply.js';
 import adminRouter from './routes/applications.js';
+import authRouter from './routes/auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -16,9 +17,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Request Logging
+// Advanced Request Logging Middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+  });
   next();
 });
 
@@ -26,6 +31,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/api/jobs', jobsRouter);
 app.use('/api/apply', applyRouter);
 app.use('/api/admin/applications', adminRouter);
+app.use('/api/auth', authRouter);
 
 // Health Check
 app.get('/api/health', (req: Request, res: Response) => {

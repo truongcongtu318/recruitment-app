@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Briefcase, MapPin, DollarSign, Clock, ArrowRight, Zap, Search, ShieldCheck, Sparkles, Filter } from "lucide-react";
+import Image from "next/image";
+import { ChevronRight, Sparkles, Zap, Calendar, MapPin, Globe, Headphones, Play, ArrowUpRight } from "lucide-react";
 import { Job } from "./types";
 
 export default function Home() {
@@ -12,14 +13,14 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchJobs() {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
       try {
-        const res = await fetch(`${apiUrl}/jobs`);
-        if (!res.ok) throw new Error('API unreachable');
+        const res = await fetch(`${apiUrl.replace(/\/$/, '')}/jobs`);
+        if (!res.ok) throw new Error('Không thể kết nối danh sách công việc.');
         const data = await res.json();
         setJobs(data);
       } catch (err: any) {
-        console.error("Fetch jobs error:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -29,160 +30,181 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="space-y-24 animate-fade-in">
+    <div className="flex flex-col min-h-screen bg-black text-white">
       {/* Hero Section */}
-      <section className="relative py-12 text-center space-y-8 max-w-4xl mx-auto">
-        <div className="inline-flex items-center gap-2 bg-blue-600/10 text-blue-400 px-5 py-2.5 rounded-full border border-blue-500/20 text-xs font-black uppercase tracking-widest animate-pulse">
-          <Sparkles className="w-4 h-4" />
-          <span>Next-Gen Career Intelligence</span>
-        </div>
-        
-        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] text-white">
-          Elevate Your <br /> 
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">Potential</span>
-        </h1>
-        
-        <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
-          The ultimate recruitment nexus for G12 TechTalent. 
-          Bridge the gap between skill and success with AI-driven matching.
-        </p>
-        
-        <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center items-center">
-            <div className="w-full md:w-[500px] relative group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-blue-500 transition-colors" />
-                <input 
-                    type="text" 
-                    placeholder="Search roles by title or tech stack..." 
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all text-lg font-medium"
-                />
+      <section className="relative pt-32 pb-20 overflow-hidden">
+        <div className="apple-container grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Left Content */}
+          <div className="lg:col-span-7 space-y-10 animate-in">
+            <h1 className="display-hero">
+              Sự nghiệp <br />
+              Công nghệ Tốt nhất <br />
+              Chỉ có tại 
+              <span className="inline-flex items-baseline relative ml-4 scale-125">
+                <span className="text-white">T</span>
+                <span className="text-apple-blue -ml-3">N</span>
+              </span>
+            </h1>
+            
+            <p className="text-white/40 text-lg max-w-lg leading-relaxed font-medium">
+              Đa dạng các cơ hội trong lĩnh vực AI và Cloud giúp bạn dễ dàng 
+              xây dựng những giải pháp tốt nhất trên toàn thế giới, 
+              tất cả chỉ có trên hệ thống TN.
+            </p>
+
+            <div className="flex items-center gap-8 pt-4">
+              <div className="flex items-center gap-2 text-white/30"><Calendar size={20} /></div>
+              <div className="flex items-center gap-2 text-white/30"><MapPin size={20} /></div>
+              <div className="flex items-center gap-2 text-white/30"><Globe size={20} /></div>
+              <div className="flex items-center gap-2 text-white/30"><Zap size={20} /></div>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-500 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-blue-600/30">
-                Explore Jobs
-            </button>
+
+            {/* Decorative Waveform Mockup */}
+            <div className="relative w-full max-w-md pt-10">
+               <div className="flex items-end gap-1 h-12 opacity-20">
+                  {[40, 70, 45, 90, 65, 30, 80, 55, 95, 40, 60, 85, 50, 75, 45, 90, 60, 35, 80, 55, 95, 40, 70, 45, 90, 65, 30, 80, 55, 95, 40, 60, 85, 50, 75, 45, 90, 60, 35, 80].map((h, i) => (
+                    <div 
+                      key={i} 
+                      className="w-1 bg-white" 
+                      style={{ height: `${h}%` }}
+                    ></div>
+                  ))}
+               </div>
+            </div>
+          </div>
+
+          {/* Right Image */}
+          <div className="lg:col-span-5 relative animate-in" style={{ animationDelay: '0.2s' }}>
+            <div className="relative aspect-[4/5] rounded-[40px] overflow-hidden border border-white/10 shadow-2xl">
+              <Image 
+                src="/tech-pro.png" 
+                alt="Chuyên gia công nghệ" 
+                fill 
+                className="object-cover"
+                priority
+              />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Trust Badges */}
-      <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-30 grayscale saturate-0 pointer-events-none">
-         <div className="flex items-center gap-2 font-black text-xl italic uppercase">G12 Cloud</div>
-         <div className="flex items-center gap-2 font-black text-xl italic uppercase font-serif">TechNexus</div>
-         <div className="flex items-center gap-2 font-black text-xl italic uppercase font-mono">QuantumDev</div>
-         <div className="flex items-center gap-2 font-black text-xl italic uppercase">AWS Partner</div>
-      </div>
-
-      {/* Main Content Grid */}
-      <section className="space-y-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
-           <div className="space-y-1">
-              <h2 className="text-4xl font-black text-white tracking-tight">Active Opportunities</h2>
-              <p className="text-slate-500 font-medium tracking-tight">Curated high-growth tech positions from verified partners.</p>
-           </div>
-           <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10">
-              <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-wider transition-all">
-                <Filter className="w-4 h-4" /> All Roles
-              </button>
-              <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-slate-400 text-xs font-black uppercase tracking-wider hover:text-white transition-all">
-                Remote Only
-              </button>
-           </div>
-        </div>
-
-        {loading ? (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-             {[1,2,3,4,5,6].map(i => (
-               <div key={i} className="glass h-[320px] rounded-3xl animate-pulse"></div>
-             ))}
-          </div>
-        ) : error ? (
-          <div className="py-32 text-center glass rounded-3xl border-dashed border-red-500/20 max-w-2xl mx-auto">
-             <div className="bg-red-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <ShieldCheck className="w-8 h-8 text-red-500" />
-             </div>
-             <h3 className="text-2xl font-bold text-white">Cloud Connection Issue</h3>
-             <p className="text-slate-500 mt-2">Database temporarily unreachable. Check your AWS network config.</p>
-             <button 
-                onClick={() => window.location.reload()} 
-                className="mt-8 bg-white/5 hover:bg-white/10 border border-white/10 px-8 py-3 rounded-full text-sm font-black uppercase tracking-widest transition-all"
-             >
-                Retry Handshake
-             </button>
-          </div>
-        ) : (
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job) => (
-              <div key={job.id} className="glass glass-hover rounded-3xl p-8 flex flex-col justify-between group">
-                <div className="space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className={`text-[10px] font-black uppercase px-3 py-1.5 rounded-full border ${job.is_hot ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-blue-600/10 text-blue-400 border-blue-600/20'}`}>
-                      {job.is_hot ? 'Trending Position' : 'New Intake'}
-                    </div>
-                    <div className="bg-white/5 px-3 py-1 rounded text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                        {job.level}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-black text-white group-hover:text-blue-400 transition-colors leading-tight">
-                        {job.title}
-                    </h3>
-                    <div className="flex items-center gap-2 text-blue-500 font-bold text-sm">
-                        <ShieldCheck className="w-4 h-4" />
-                        {job.company}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-                      <MapPin className="w-4 h-4 opacity-40 text-blue-400" />
-                      {job.location}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-                      <Clock className="w-4 h-4 opacity-40 text-blue-400" />
-                      {job.type}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 pt-8 border-t border-white/5 flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Est. Salary Range</span>
-                        <span className="text-2xl font-black text-white">{job.salary}</span>
-                    </div>
-                    <Link 
-                      href={`/job-details?id=${job.id}`}
-                      className="bg-blue-600 hover:bg-white hover:text-black p-4 rounded-2xl transition-all duration-300 group-hover:rotate-6 group-active:scale-90"
-                    >
-                      <ArrowRight className="w-6 h-6" />
-                    </Link>
-                </div>
+      {/* Partners Slider - Text Typography Style */}
+      <section className="py-24 bg-black overflow-hidden relative">
+        {/* Side Masks for Fade Effect */}
+        <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-black to-transparent z-10"></div>
+        <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-black to-transparent z-10"></div>
+        
+        <div className="logo-carousel !bg-black !py-0">
+          <div className="logo-track bg-black">
+            {[
+              'AMAZON AWS', 'GOOGLE', 'MICROSOFT', 'META', 'APPLE', 'OPENAI', 'NVIDIA'
+            ].map((name) => (
+              <div key={name} className="partner-logo px-32 group bg-black">
+                <span className="text-5xl md:text-7xl font-black text-white/20 group-hover:text-white transition-all duration-700 cursor-default whitespace-nowrap">
+                  {name}
+                </span>
+              </div>
+            ))}
+            {/* Duplicate for infinite loop */}
+            {[
+              'AMAZON AWS', 'GOOGLE', 'MICROSOFT', 'META', 'APPLE', 'OPENAI', 'NVIDIA'
+            ].map((name) => (
+              <div key={`${name}-dup`} className="partner-logo px-32 group bg-black">
+                <span className="text-5xl md:text-7xl font-black text-white/20 group-hover:text-white transition-all duration-700 cursor-default whitespace-nowrap">
+                  {name}
+                </span>
               </div>
             ))}
           </div>
-        )}
+        </div>
       </section>
 
-      {/* Feature Section */}
-      <section className="grid md:grid-cols-2 gap-12 py-12">
-          <div className="glass p-12 rounded-3xl space-y-6 relative overflow-hidden group">
-             <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-blue-600/20 blur-3xl rounded-full group-hover:scale-150 transition-all" />
-             <div className="bg-blue-600 w-12 h-12 rounded-xl flex items-center justify-center p-2.5">
-                <Briefcase className="text-white w-full h-full" />
-             </div>
-             <h3 className="text-3xl font-black text-white leading-tight">Post Your Resume<br/>to AWS Databases</h3>
-             <p className="text-slate-400 font-medium leading-relaxed">
-                Connect your technical portfolio to our high-performance relational backend powered by RDS Multi-AZ.
-             </p>
+      {/* Roles Section */}
+      <section className="py-32 bg-black">
+        <div className="apple-container">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-20">
+            <h2 className="section-heading">
+              Đa dạng các <br />
+              Vị trí Phổ biến <br />
+              Trên Thế giới
+            </h2>
+            <div className="space-y-6">
+              <p className="text-white/40 text-lg leading-relaxed">
+                Tìm kiếm và ứng tuyển vào các vị trí độc quyền từ các công ty 
+                phổ biến trên toàn thế giới chỉ có tại hệ thống TN.
+              </p>
+              <div className="flex gap-12">
+                <div>
+                   <div className="text-4xl font-black mb-1">130K</div>
+                   <div className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Ứng viên đã đăng ký</div>
+                </div>
+                <div>
+                   <div className="text-4xl font-black mb-1">70K+</div>
+                   <div className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Vị trí đã được lấp đầy</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="glass p-12 rounded-3xl space-y-6 relative overflow-hidden group">
-             <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-indigo-600/20 blur-3xl rounded-full group-hover:scale-150 transition-all" />
-             <div className="bg-indigo-600 w-12 h-12 rounded-xl flex items-center justify-center p-2.5">
-                <ShieldCheck className="text-white w-full h-full" />
-             </div>
-             <h3 className="text-3xl font-black text-white leading-tight">AI Matching with<br/>Amazon Bedrock</h3>
-             <p className="text-slate-400 font-medium leading-relaxed">
-                Our architecture uses S3-Lambda triggers to analyze your CV and job matching precision in real-time.
-             </p>
-          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="aspect-video bg-white/5 rounded-[32px] animate-pulse"></div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {jobs.slice(0, 4).map((job, idx) => {
+                const getJobImage = (title: string) => {
+                  if (title.toLowerCase().includes('cloud')) return '/jobs/cloud.png';
+                  if (title.toLowerCase().includes('ai') || title.toLowerCase().includes('ml')) return '/jobs/ai.png';
+                  if (title.toLowerCase().includes('frontend') || title.toLowerCase().includes('next')) return '/jobs/frontend.png';
+                  return '/jobs/cloud.png';
+                };
+
+                return (
+                  <Link 
+                    key={job.id} 
+                    href={`/job-details?id=${job.id}`}
+                    className="bento-item group relative aspect-video"
+                  >
+                    {/* Background Image with Zoom Effect */}
+                    <div className="absolute inset-0 z-0">
+                      <Image 
+                        src={getJobImage(job.title)} 
+                        alt={job.title} 
+                        fill 
+                        className="object-cover transition-transform duration-1000 group-hover:scale-110 opacity-60"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    </div>
+                    
+                    <div className="absolute inset-0 p-10 flex flex-col justify-end z-20">
+                      <div className="flex items-center justify-between">
+                         <div className="space-y-1">
+                            <div className="text-[10px] font-black text-apple-bright-blue uppercase tracking-[0.2em] mb-2">{job.type}</div>
+                            <h3 className="text-3xl font-black tracking-tighter group-hover:translate-x-2 transition-transform duration-500 text-white">{job.title}</h3>
+                            <p className="text-white/60 font-bold text-sm">{job.company} • {job.salary}</p>
+                         </div>
+                         <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-500 shadow-2xl">
+                            <ArrowUpRight size={28} />
+                         </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="py-32 bg-black border-t border-white/5 text-center">
+        <div className="apple-container max-w-3xl">
+           <h2 className="section-heading mb-8">Sẵn sàng để bắt đầu <br /> hành trình tiếp theo?</h2>
+           <Link href="/register" className="btn-primary px-12 py-5 text-xl text-black">Bắt đầu ngay</Link>
+        </div>
       </section>
     </div>
   );

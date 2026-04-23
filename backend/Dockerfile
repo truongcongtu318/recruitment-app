@@ -10,7 +10,7 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Non-root user for security
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
@@ -23,6 +23,6 @@ USER nextjs
 
 EXPOSE 8000
 
-ENV PORT 8000
+ENV PORT=8000
 
 CMD ["node", "dist/index.js"]

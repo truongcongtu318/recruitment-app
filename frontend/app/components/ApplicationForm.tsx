@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, CheckCircle2, AlertCircle, FileUp, ShieldCheck } from 'lucide-react';
+import { Send, CheckCircle2, AlertCircle, FileUp, Loader2 } from 'lucide-react';
 
 interface ApplicationFormProps {
   jobId: number;
@@ -16,12 +16,16 @@ export default function ApplicationForm({ jobId }: ApplicationFormProps) {
   });
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+    setGeneralError('');
+
     if (!file) {
-      alert("Please upload your CV first.");
+      setGeneralError("Vui lòng đính kèm CV (PDF/Word).");
       return;
     }
 
@@ -35,136 +39,149 @@ export default function ApplicationForm({ jobId }: ApplicationFormProps) {
     data.append('cv', file);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `/${rawApiUrl.replace(/^\//, '')}`;
+      
       const res = await fetch(`${apiUrl}/apply`, {
         method: 'POST',
         body: data,
       });
 
-      if (!res.ok) throw new Error('Submission failed');
+      const responseData = await res.json();
+
+      if (!res.ok) {
+        if (responseData.error === 'Validation failed' && responseData.details) {
+          const fieldErrors: Record<string, string> = {};
+          responseData.details.forEach((issue: any) => {
+            fieldErrors[issue.path[0]] = issue.message;
+          });
+          setErrors(fieldErrors);
+          setStatus('idle');
+          return;
+        }
+        throw new Error(responseData.error || 'Có lỗi xảy ra khi gửi hồ sơ.');
+      }
       
       setStatus('success');
-      setMessage('Your dossier has been transmitted to our secure registry. Prepare for contact.');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submit error:", error);
       setStatus('error');
-      setMessage('Encryption handshake failed. Please retry transmission.');
+      setGeneralError(error.message);
     }
   };
 
   if (status === 'success') {
     return (
-      <div className="glass p-12 text-center space-y-6 rounded-[2rem] border-green-500/20">
-        <div className="bg-green-500/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-10 h-10 text-green-500" />
+      <div className="glass-card p-12 text-center space-y-8 animate-in border-apple-bright-blue/30">
+        <div className="bg-apple-blue w-24 h-24 rounded-full flex items-center justify-center mx-auto text-white shadow-[0_0_40px_rgba(0,113,227,0.4)]">
+            <CheckCircle2 size={48} />
         </div>
-        <h2 className="text-4xl font-black text-white">Transmission Complete</h2>
-        <p className="text-slate-500 font-medium">{message}</p>
+        <div className="space-y-2">
+          <h2 className="text-4xl font-black tracking-tighter text-white">Hồ sơ đã gửi.</h2>
+          <p className="text-white/60 font-medium max-w-sm mx-auto">Chúng tôi đã tiếp nhận hồ sơ của bạn và sẽ phản hồi qua email sớm nhất.</p>
+        </div>
         <button 
           onClick={() => window.location.href = '/'}
-          className="mt-6 bg-white text-black px-10 py-4 rounded-full font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl shadow-blue-600/10"
+          className="btn-primary w-full py-4 text-lg"
         >
-          Return to Registry
+          Quay lại trang chủ
         </button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass p-10 lg:p-14 space-y-10 rounded-[2.5rem]">
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-blue-500 text-[10px] font-black uppercase tracking-[0.2em]">
-            <ShieldCheck className="w-4 h-4" />
-            Secure Entry Point
-        </div>
-        <h2 className="text-4xl font-black tracking-tighter text-white">Apply Now</h2>
-        <p className="text-slate-500 font-medium">Transmit your credentials to the G12 Cloud Network.</p>
+    <form onSubmit={handleSubmit} className="glass-card p-10 lg:p-12 space-y-10 animate-in">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-black tracking-tighter text-white">Ứng tuyển ngay.</h2>
+        <p className="text-white/50 font-medium">Gửi hồ sơ của bạn tới hệ thống tuyển dụng TN.</p>
       </div>
 
       <div className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Legal Identity</label>
-            <input 
-                required 
-                type="text" 
-                placeholder="Full Name"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold placeholder:text-slate-700"
-                onChange={e => setFormData({...formData, fullName: e.target.value})}
-            />
-            </div>
-            <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Digital Mail</label>
-            <input 
-                required 
-                type="email" 
-                placeholder="email@example.com"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold placeholder:text-slate-700"
-                onChange={e => setFormData({...formData, email: e.target.value})}
-            />
-            </div>
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 ml-1">Họ và Tên</label>
+          <input 
+            required 
+            type="text" 
+            placeholder="Nguyen Van A"
+            className={`w-full bg-white/5 border ${errors.fullName ? 'border-red-500' : 'border-white/10'} rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue transition-all font-medium text-white placeholder:text-white/20`}
+            onChange={e => setFormData({...formData, fullName: e.target.value})}
+          />
+          {errors.fullName && <p className="text-[11px] text-red-500 font-bold ml-1">{errors.fullName}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 ml-1">Email liên hệ</label>
+          <input 
+            required 
+            type="email" 
+            placeholder="example@email.com"
+            className={`w-full bg-white/5 border ${errors.email ? 'border-red-500' : 'border-white/10'} rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue transition-all font-medium text-white placeholder:text-white/20`}
+            onChange={e => setFormData({...formData, email: e.target.value})}
+          />
+          {errors.email && <p className="text-[11px] text-red-500 font-bold ml-1">{errors.email}</p>}
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Comm Channel</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 ml-1">Số điện thoại</label>
             <input 
-                type="tel" 
-                placeholder="+XX XXX XXX XXX"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold placeholder:text-slate-700"
-                onChange={e => setFormData({...formData, phone: e.target.value})}
+              type="tel" 
+              placeholder="09xxx..."
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue transition-all font-medium text-white placeholder:text-white/20"
+              onChange={e => setFormData({...formData, phone: e.target.value})}
             />
-            </div>
+          </div>
 
-            <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Digital CV (PDF)</label>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 ml-1">CV (PDF/Word)</label>
             <div className="relative group">
-                <input 
+              <input 
                 required
                 type="file" 
                 accept=".pdf,.doc,.docx"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 onChange={e => setFile(e.target.files?.[0] || null)}
-                />
-                <div className="w-full bg-white/5 border border-white/10 border-dashed rounded-2xl px-6 py-4 flex items-center gap-3 group-hover:border-blue-500/50 transition-all">
-                <FileUp className="w-5 h-5 text-blue-500 opacity-60" />
-                <span className="text-slate-500 text-sm font-bold truncate">
-                    {file ? file.name : "Select File..."}
+              />
+              <div className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 flex items-center gap-3 group-hover:bg-white/10 transition-all border-dashed">
+                <FileUp className="w-5 h-5 text-apple-bright-blue" />
+                <span className="text-white/40 text-sm font-bold truncate">
+                  {file ? file.name : "Chọn file hồ sơ..."}
                 </span>
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
         </div>
 
         <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Mission Experience</label>
-            <textarea 
+          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 ml-1">Tóm tắt kinh nghiệm</label>
+          <textarea 
             rows={4} 
-            placeholder="Briefly state your core technical impact..."
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold resize-none placeholder:text-slate-700"
+            placeholder="Chia sẻ ngắn gọn về kinh nghiệm của bạn..."
+            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:border-apple-blue transition-all font-medium text-white placeholder:text-white/20 resize-none"
             onChange={e => setFormData({...formData, experienceSummary: e.target.value})}
-            ></textarea>
+          ></textarea>
         </div>
       </div>
 
-      {status === 'error' && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-5 rounded-2xl flex items-center gap-3 text-xs font-black uppercase tracking-widest">
-           <AlertCircle className="w-5 h-5" />
-           {message}
+      {generalError && (
+        <div className="bg-red-500/10 text-red-500 p-5 rounded-2xl flex items-center gap-3 text-sm font-bold border border-red-500/20">
+           <AlertCircle size={20} />
+           {generalError}
         </div>
       )}
 
       <button 
         disabled={status === 'loading'}
         type="submit" 
-        className="w-full bg-blue-600 text-white py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-blue-500 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-blue-600/30 disabled:opacity-50 group hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full bg-white text-black py-5 rounded-full text-lg font-black tracking-tight hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {status === 'loading' ? (
-          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <Loader2 className="w-6 h-6 animate-spin" />
         ) : (
           <>
-            Initiate Submission
-            <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+            Gửi hồ sơ ngay
+            <Send className="w-5 h-5" />
           </>
         )}
       </button>
