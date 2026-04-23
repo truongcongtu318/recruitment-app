@@ -30,11 +30,13 @@
 - Selected Database: **RDS Postgres / Relational**
 
 
+
 # 2. Data Access Pattern Log 
 - **Part A** 
+  - List available jobs by level (Candidate view): Retrieve job listings filtered by experience level (e.g., Senior, Mid, Junior), sorted by job creation time ( ~50 requests/min )
   - List of applications for a job (HR dashboard): Fetch all applications with job metadata (title, company) via JOIN, sorted by submission time ( ~20 requests/min at peak )
   - Application submission: Candidate submit a new application with their information, CV reference ( ~10 requests/min )
-  - List available jobs by level (Candidate view): Retrieve job listings filtered by experience level (e.g., Senior, Mid, Junior), sorted by job creation time ( ~50 requests/min )
+
   
 - **Part B**
   - List available jobs by level (Indexed Lookup)
