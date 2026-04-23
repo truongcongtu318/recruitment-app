@@ -28,17 +28,17 @@
 - **Part A** 
   - List of applications for a job (HR dashboard): Fetch all applications with job metadata (title, company) via JOIN, sorted by submission time ( ~20 requests/min at peak )
   - Application submission: Candidate submit a new application with their information, CV reference ( ~10 requests/min )
-  - List available jobs (Candidate view): Retrieve all job descriptions, sorted by job creation time ( ~50 requests/min )
+  - List available jobs by level (Candidate view): Retrieve job listings filtered by experience level (e.g., Senior, Mid, Junior), sorted by job creation time ( ~50 requests/min )
   
 - **Part B**
-  - List available jobs
+  - List available jobs by level (Indexed Lookup)
     - Engine: RDS (PostgreSQL)
     - Paradigm: Relational database
-    - Mechanism: Index on `created_at` column to accelerate the default sort order. Without index, Postgres performs a full sequential scan and then sorts in-memory; with the index, Postgres reads rows in pre-sorted order directly from the B-tree index, avoiding an expensive sort step
+    - Mechanism: B-tree index on `level` column. Without the index, Postgres performs a full sequential scan examining every row to find matching level values. With the index, Postgres uses an Index Scan to jump directly to matching rows, drastically reducing the number of rows examined — especially as the jobs table grows
         ```sql
-            SELECT * FROM jobs ORDER BY created_at DESC;
+            SELECT * FROM jobs WHERE level = $1 ORDER BY created_at DESC;
         ```
-    - Index: CREATE INDEX idx_jobs_created_at ON jobs(created_at DESC);
+    - Index: CREATE INDEX idx_jobs_level ON jobs(level);
 
   - List of applications for a job (HR dashboard)
     - Engine: RDS (PostgreSQL)
@@ -87,9 +87,9 @@
   <tbody>
     <tr>
       <td><strong>Recruitment System</strong></td>
-      <td>List of available jobs sorted by created_at DESC; future filtering by location and level via <code>WHERE location = $1 AND level = $2 ORDER BY created_at DESC</code> with 50 requests/min at peak</td>
+      <td>List of available jobs filtered by level via <code>WHERE level = $1 ORDER BY created_at DESC</code> with 50 requests/min at peak</td>
       <td><strong>RDS PostgreSQL (relational)</strong></td>
-      <td>DynamoDB requires every query pattern to be pre-designed as a GSI. While a single GSI (PK=location, SK=level) can serve one fixed filter, any new ad-hoc filter combination (e.g., salary range, job type) requires yet another GSI. RDS PostgreSQL handles this flexibly with composite B-tree indexes — a single <code>CREATE INDEX</code> supports arbitrary multi-column WHERE clauses without redesigning the table schema. Additionally, DynamoDB does not support ORDER BY across partitions, so sorting the full result set by created_at requires a full scan or client-side merge.</td>
+      <td>DynamoDB requires every query pattern to be pre-designed as a GSI. A GSI with PK=level can serve this one filter, but adding new filters (e.g., location, salary range, job type) each requires a separate GSI — and DynamoDB limits tables to 20 GSIs. RDS PostgreSQL handles this flexibly with B-tree indexes: a single <code>CREATE INDEX</code> on any column enables filtered lookups, and composite indexes support multi-column WHERE clauses without redesigning the table. Additionally, DynamoDB does not support ORDER BY across partitions, so sorting results by created_at requires client-side merging.</td>
     </tr>
     <tr>
       <td><strong>Recruitment System</strong></td>
