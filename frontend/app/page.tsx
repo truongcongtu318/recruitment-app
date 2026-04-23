@@ -32,21 +32,25 @@ export default function Home() {
       <section className="relative pt-32 pb-20 overflow-hidden">
         <div className="apple-container grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Content */}
-          <div className="lg:col-span-7 space-y-10 animate-in">
-            <h1 className="display-hero">
-              Sự nghiệp <br />
-              Công nghệ Tốt nhất <br />
-              Chỉ có tại
-              <span className="inline-flex items-baseline relative ml-4 scale-125">
+          <div className="lg:col-span-7 space-y-12 animate-in">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-apple-blue/10 border border-apple-blue/20 text-apple-bright-blue text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+              <Sparkles size={14} /> Hệ sinh thái tuyển dụng tương lai
+            </div>
+
+            <h1 className="text-6xl md:text-8xl font-black tracking-[-0.04em] leading-[1.05] text-white">
+              Kiến tạo <br />
+              Tương lai <br />
+              Công nghệ tại 
+              <span className="inline-flex items-baseline relative ml-4">
                 <span className="text-white">T</span>
-                <span className="text-apple-blue -ml-3">N</span>
+                <span className="text-apple-blue -ml-[0.28em]">N</span>
               </span>
             </h1>
 
-            <p className="text-white/40 text-lg max-w-lg leading-relaxed font-medium">
-              Đa dạng các cơ hội trong lĩnh vực AI và Cloud giúp bạn dễ dàng
-              xây dựng những giải pháp tốt nhất trên toàn thế giới,
-              tất cả chỉ có trên hệ thống TN.
+            <p className="text-white/40 text-xl max-w-lg leading-relaxed font-medium">
+              Khám phá những cơ hội đột phá trong lĩnh vực AI và Cloud. 
+              Xây dựng tương lai của bạn cùng những chuyên gia hàng đầu 
+              trên toàn thế giới.
             </p>
 
             <div className="flex items-center gap-8 pt-4">
@@ -56,18 +60,6 @@ export default function Home() {
               <div className="flex items-center gap-2 text-white/30"><Zap size={20} /></div>
             </div>
 
-            {/* Decorative Waveform Mockup */}
-            <div className="relative w-full max-w-md pt-10">
-              <div className="flex items-end gap-1 h-12 opacity-20">
-                {[40, 70, 45, 90, 65, 30, 80, 55, 95, 40, 60, 85, 50, 75, 45, 90, 60, 35, 80, 55, 95, 40, 70, 45, 90, 65, 30, 80, 55, 95, 40, 60, 85, 50, 75, 45, 90, 60, 35, 80].map((h, i) => (
-                  <div
-                    key={i}
-                    className="w-1 bg-white"
-                    style={{ height: `${h}%` }}
-                  ></div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Right Image */}

@@ -34,6 +34,35 @@ export class ApplicationsService {
     }));
   }
 
+  async getApplicationsByJobId(jobId: number) {
+    const query = `
+      SELECT a.*, j.title as job_title, j.company as job_company
+      FROM applications a
+      JOIN jobs j ON a.job_id = j.id
+      WHERE a.job_id = $1
+      ORDER BY a.submitted_at DESC
+    `;
+    
+    const { rows } = await pool.query(query, [jobId]);
+
+    return Promise.all(rows.map(async (row) => {
+      if (row.cv_s3_key && process.env.S3_BUCKET) {
+        try {
+          const command = new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET,
+            Key: row.cv_s3_key,
+          });
+          const signedUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+          return { ...row, cv_url: signedUrl };
+        } catch (s3Err) {
+          console.error(`[S3] Error signing URL for ${row.cv_s3_key}:`, s3Err);
+          return { ...row, cv_url: null };
+        }
+      }
+      return { ...row, cv_url: null };
+    }));
+  }
+
   async updateStatus(id: string, status: string) {
     const result = await pool.query(
       'UPDATE applications SET status = $1 WHERE id = $2 RETURNING *',

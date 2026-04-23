@@ -8,6 +8,7 @@ const router = Router();
  * Admin Only routes
  */
 router.get('/', authenticateToken, isAdmin, applicationsController.getApplications.bind(applicationsController));
+router.get('/job/:jobId', authenticateToken, isAdmin, applicationsController.getApplicationsByJob.bind(applicationsController));
 router.put('/:id/status', authenticateToken, isAdmin, applicationsController.updateStatus.bind(applicationsController));
 
 export default router;

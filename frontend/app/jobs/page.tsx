@@ -11,6 +11,8 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('All');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const levels = ['All', 'Junior', 'Middle', 'Senior', 'Architect', 'Lead'];
 
   useEffect(() => {
     async function fetchJobs() {
@@ -67,20 +69,38 @@ export default function JobsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-4 w-full md:w-auto">
-              <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center gap-4 w-full md:w-auto">
+            <div className="relative group w-full md:w-auto">
+              <button 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center gap-4 w-full md:w-64 transition-all hover:bg-white/10"
+              >
                 <Filter className="text-apple-bright-blue w-5 h-5" />
-                <select 
-                  className="bg-transparent text-white font-bold outline-none cursor-pointer"
-                  onChange={(e) => setFilter(e.target.value)}
-                >
-                  <option value="All">Tất cả cấp bậc</option>
-                  <option value="Junior">Junior</option>
-                  <option value="Senior">Senior</option>
-                  <option value="Architect">Architect</option>
-                  <option value="Lead">Lead</option>
-                </select>
-              </div>
+                <span className="flex-grow text-left text-white font-bold text-sm">
+                  {filter === 'All' ? 'Tất cả cấp bậc' : filter}
+                </span>
+                <Clock className={`w-4 h-4 text-white/20 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isFilterOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
+                  <div className="absolute top-full mt-3 left-0 w-full bg-[#121212] border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    {levels.map((l) => (
+                      <button 
+                        key={l}
+                        onClick={() => {
+                          setFilter(l);
+                          setIsFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-6 py-4 text-[11px] font-black uppercase tracking-widest transition-all border-b border-white/5 last:border-0 flex items-center gap-3 ${filter === l ? 'bg-apple-blue text-white' : 'text-white/40 hover:bg-white/5 hover:text-white'}`}
+                      >
+                        <div className={`w-1.5 h-1.5 rounded-full ${l === 'All' ? 'bg-white/20' : 'bg-apple-bright-blue'}`}></div>
+                        {l === 'All' ? 'Tất cả cấp bậc' : l}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

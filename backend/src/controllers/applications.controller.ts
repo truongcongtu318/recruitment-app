@@ -12,6 +12,17 @@ export class ApplicationsController {
     }
   }
 
+  async getApplicationsByJob(req: Request, res: Response) {
+    const { jobId } = req.params;
+    try {
+      const applications = await applicationsService.getApplicationsByJobId(Number(jobId));
+      return res.json(applications);
+    } catch (err: any) {
+      console.error('[ApplicationsController] getApplicationsByJob error:', err.message);
+      return res.status(500).json({ error: 'Database query failed' });
+    }
+  }
+
   async updateStatus(req: Request, res: Response) {
     const { id } = req.params;
     const { status } = req.body;
