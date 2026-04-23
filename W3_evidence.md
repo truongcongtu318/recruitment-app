@@ -1,3 +1,9 @@
+<style>
+    body {
+        font-size: 18px;
+    }
+</style>
+
 # Evidence Pack
 - [Evidence Pack](#evidence-pack)
 - [1. Cover](#1-cover)
@@ -111,7 +117,34 @@
 
 
 # 3. Deployment Evidence 
+![alt text](images/image-2.png)
+- Enabled encryption using AWS-managed KMS key (aws/rds) to reduce key management overhead since currently we have no compliance mandate to obey and we want rotation to be automatic. 
 
+![alt text](images/image-6.png)
+- Enabled Multi-AZ with RDS for automatic failover to a standby replica in a different Availability Zone in case of infrastructure failure without requiring manual intervention, therby ensuring high availability and minimizing downtime 
+
+![alt text](images/image-3.png)
+- Configured RDS security group to allow inbound traffic only from the ECS service security group on port 5432. This configuration enforces least privilege access and prevents unauthorized connections from external sources.
+ 
+![alt text](images/image-4.png)
+- RDS is placed in private subnets, which are different from subnets of ECS cluster, to seperate tiers and prevent direct internet exposure.
+
+![alt text](images/image-5.png)
+- Enabled automated backups with a 7-day retention period for point-in-time recovery. This configuration allows restoring the database to any specific timestamp within the retention window in case of data corruption
+
+![alt text](images/image-8.png)
+- Created a snapshots before any changes to provide a reliable rollback point, ensuring that we can quickly restore the database to a good state if deployment issues occur
+
+
+![alt text](images/image-7.png)
+- Selected `db.m7g.large` instead of smaller instances like t3.micro to be able to handle expected workload and avoid CPU/memory bottlenecks when there are greate number of concurrent requests.
+- Selected io2 over general-purpose SSD (gp3) to ensure predictable IOPS and durability for production workloads.
+
+![alt text](images/image-9.png)
+- Configured a DB subnet group with private subnets on two different Availability Zones, supporting Multi-AZ deployment for RDS to avoid single points of failure
+
+![alt text](images/image-10.png)
+- Disabled public access for the RDS instance ensures that all database traffic flows only through ECS services, preventing unauthorized external connections
 
 
 # 4. Working Query Evidence 
@@ -121,5 +154,10 @@
 
 
 # 6. VPC and Networking Evidence
+![alt text](images/image-11.png)
+- Public subnets can access to the internet through internet gateway
+- 4 private subnets can only access local services through local, and S3 through S3 gateway 
+
+
 
 # 7. Negative Security Test
