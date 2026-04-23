@@ -149,10 +149,18 @@
 
 
 # 4. Working Query Evidence 
-
+```sql
+  SELECT a.*, j.title as job_title, j.company as job_company
+  FROM applications a
+  JOIN jobs j ON a.job_id = j.id
+  ORDER BY a.submitted_at DESC
+```
 
 # 5. Lambda, Textract and Comprehend Evidence 
+![alt text](../images/image-13.png)
 
+![alt text](../images/image-14.png)
+- After uploading CV into bucket through application, Lambda triggers event and get CV from bucket S3, send to Textract to get text, then Comprehend get information based on keywords and send result to SQS
 
 # 6. VPC and Networking Evidence
 ![alt text](../images/image-11.png)
@@ -162,3 +170,6 @@
 
 
 # 7. Negative Security Test
+![alt text](../images/image-12.png)
+- Since PubliclyAccessible=false and the database is in private subnet of VPC, RDS is not exposed to the internet. External clients cannot connect to the database if they are not in the inbound rules of security group for RDS
+  
