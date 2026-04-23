@@ -14,10 +14,12 @@ export interface Job {
 
 export interface Application {
   id: string;
+  job_id: number;
   full_name: string;
   email: string;
   submitted_at: string;
   status: string;
   job_title: string;
   job_company: string;
+  cv_url?: string;
 }

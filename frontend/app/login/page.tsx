@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Briefcase, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,6 +14,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,44 +23,28 @@ export default function LoginPage() {
     setGeneralError('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.error === 'Validation failed' && data.details) {
-          const fieldErrors: Record<string, string> = {};
-          data.details.forEach((issue: any) => {
-            fieldErrors[issue.path[0]] = issue.message;
-          });
-          setErrors(fieldErrors);
-          return;
-        }
-        throw new Error(data.error || 'Đăng nhập thất bại');
-      }
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      const data = await api.post('/auth/login', { email, password });
+      
+      login(data.token, data.user);
       
       console.log('[Auth] Đăng nhập thành công, User Role:', data.user.role);
 
       // Role-based redirection
       if (data.user.role === 'admin') {
-        console.log('[Auth] Chuyển hướng tới Admin Dashboard');
-        router.push('/admin');
-      } else if (data.user.role === 'employer') {
-        console.log('[Auth] Chuyển hướng tới Quản lý Dashboard');
         router.push('/admin');
       } else {
-        console.log('[Auth] Chuyển hướng tới Home (Candidate)');
         router.push('/');
       }
     } catch (err: any) {
-      setGeneralError(err.message);
+      if (err.details) {
+        const fieldErrors: Record<string, string> = {};
+        err.details.forEach((issue: any) => {
+          fieldErrors[issue.path[0]] = issue.message;
+        });
+        setErrors(fieldErrors);
+      } else {
+        setGeneralError(err.message || 'Đăng nhập thất bại');
+      }
     } finally {
       setLoading(false);
     }

@@ -4,16 +4,19 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Briefcase, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'candidate' | 'employer'>('candidate');
+  const [role, setRole] = useState<'candidate' | 'admin'>('candidate');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState('');
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,31 +25,20 @@ export default function RegisterPage() {
     setGeneralError('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiUrl}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, email, password, role }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.error === 'Validation failed' && data.details) {
-          const fieldErrors: Record<string, string> = {};
-          data.details.forEach((issue: any) => {
-            fieldErrors[issue.path[0]] = issue.message;
-          });
-          setErrors(fieldErrors);
-          return;
-        }
-        throw new Error(data.error || 'Đăng ký thất bại');
-      }
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      const data = await api.post('/auth/register', { fullName, email, password, role });
+      
+      login(data.token, data.user);
       router.push('/');
     } catch (err: any) {
-      setGeneralError(err.message);
+      if (err.details) {
+        const fieldErrors: Record<string, string> = {};
+        err.details.forEach((issue: any) => {
+          fieldErrors[issue.path[0]] = issue.message;
+        });
+        setErrors(fieldErrors);
+      } else {
+        setGeneralError(err.message || 'Đăng ký thất bại');
+      }
     } finally {
       setLoading(false);
     }
@@ -80,10 +72,10 @@ export default function RegisterPage() {
                 </button>
                 <button 
                   type="button"
-                  onClick={() => setRole('employer')}
-                  className={`py-3 rounded-xl text-xs font-black transition-all ${role === 'employer' ? 'bg-apple-blue text-white shadow-[0_0_20px_rgba(0,113,227,0.4)]' : 'text-white/40 hover:text-white'}`}
+                  onClick={() => setRole('admin')}
+                  className={`py-3 rounded-xl text-xs font-black transition-all ${role === 'admin' ? 'bg-apple-blue text-white shadow-[0_0_20px_rgba(0,113,227,0.4)]' : 'text-white/40 hover:text-white'}`}
                 >
-                  NHÀ TUYỂN DỤNG
+                  QUẢN TRỊ VIÊN
                 </button>
              </div>
           </div>

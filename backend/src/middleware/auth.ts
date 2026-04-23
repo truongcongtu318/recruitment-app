@@ -18,8 +18,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
 export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
   const user = (req as any).user;
-  // Cho phép cả admin và employer
-  if (!user || (user.role !== 'admin' && user.role !== 'employer')) {
+  if (!user || user.role !== 'admin') {
     return res.status(403).json({ error: 'Unauthorized access' });
   }
   next();

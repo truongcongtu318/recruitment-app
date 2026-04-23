@@ -12,14 +12,41 @@ export const pool = new Pool({
   idleTimeoutMillis: 30000,
 });
 
+// Add error listener to pool for better debugging
+pool.on('error', (err) => {
+  console.error('[DB Pool] Unexpected error on idle client:', err.message);
+});
+
 /**
  * Initializes the database schema for Week 3.
  */
 export async function initDB(): Promise<void> {
+  const client = await pool.connect();
   try {
     console.log('[DB] Initializing Database Schema...');
-    
-    await pool.query(`
+
+    await client.query('BEGIN');
+
+    // 0. Ensure extensions
+    console.log('[DB] Enabling pgcrypto extension...');
+    await client.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
+
+    // 1. Create Users
+    console.log('[DB] Ensuring users table exists...');
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        full_name VARCHAR(200) NOT NULL,
+        email VARCHAR(200) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // 2. Create Jobs
+    console.log('[DB] Ensuring jobs table exists...');
+    await client.query(`
       CREATE TABLE IF NOT EXISTS jobs (
         id SERIAL PRIMARY KEY,
         title VARCHAR(200) NOT NULL,
@@ -31,18 +58,14 @@ export async function initDB(): Promise<void> {
         level VARCHAR(50),
         is_hot BOOLEAN DEFAULT false,
         deadline DATE,
+        created_by INTEGER REFERENCES users(id),
         created_at TIMESTAMP DEFAULT NOW()
       );
+    `);
 
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        full_name VARCHAR(200) NOT NULL,
-        email VARCHAR(200) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role VARCHAR(50) DEFAULT 'user',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-
+    // 3. Create Applications
+    console.log('[DB] Ensuring applications table exists...');
+    await client.query(`
       CREATE TABLE IF NOT EXISTS applications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         job_id INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
@@ -57,19 +80,13 @@ export async function initDB(): Promise<void> {
       );
     `);
 
-    const { rowCount } = await pool.query('SELECT 1 FROM jobs LIMIT 1');
-    if (rowCount === 0) {
-      console.log('[DB] Seeding initial recruitment data...');
-      await pool.query(`
-        INSERT INTO jobs (title, description, location, type, company, salary, level, is_hot, deadline) VALUES
-          ('Senior Cloud Architect', 'Lead our AWS migration strategy and define best practices for the G12 platform.', 'Remote', 'Full-time', 'G12 Tech Solutions', '$3,500 - $5,000', 'Senior', true, '2026-05-30'),
-          ('AI/ML Engineer', 'Work on Amazon Bedrock and Textract integration for automated CV analysis.', 'Ho Chi Minh City', 'Full-time', 'XBrain AI', '$2,000 - $3,500', 'Mid', true, '2026-05-30'),
-          ('Frontend Lead (Next.js)', 'Build premium UIs and mentor junior developers in modern React patterns.', 'Da Nang', 'Full-time', 'InnoLab VN', '$1,800 - $2,800', 'Senior', false, '2026-06-15');
-      `);
-      console.log('[DB] Seed data successfully inserted.');
-    }
+    await client.query('COMMIT');
+    console.log('[DB] Database schema check complete.');
   } catch (err: any) {
+    await client.query('ROLLBACK');
     console.error('[DB] Critical Initialization Error:', err.message);
     throw err;
+  } finally {
+    client.release();
   }
 }
