@@ -113,14 +113,14 @@
     </tr>
     <tr>
       <td><strong>Recruitment System</strong></td>
-      <td>List of applications for a job (HR dashboard): Fetch application information along with jobs via foreign key constraint. Using JOIN to fetch all applications for a job including job metadata (title, company), sorted by submitted_at DESC
+      <td>List of applications for a job (HR dashboard): Fetch application information along with jobs via foreign key constraint. Using JOIN to fetch all applications for a job including job metadata (title, company), sorted by submitted_at DESC. ( ~20 requests/min at peak )
       </td>
       <td><strong>RDS PostgreSQL (relational)</strong></td>
       <td>DocumentDB does not support JOIN operation. It must embed job information into every application document. When job information is updated, all embedded records must be updated separately, leading time consuming and inconsistency.</td>
     </tr>
     <tr>
       <td><strong>Recruitment System</strong></td>
-      <td>Application Submission (Candidate Submit Application): Insert application with foreign key constraint ensuring referential integrity. The RETURNING clause confirms record insertion. Without foreign key constraint, invalid job_id could be inserted, corrupting data consistency.
+      <td>Application Submission (Candidate Submit Application): Insert application with foreign key constraint ensuring referential integrity. The RETURNING clause confirms record insertion. Without foreign key constraint, invalid job_id could be inserted, corrupting data consistency. ( ~10 requests/min )
       </td>
       <td><strong>RDS PostgreSQL (relational)</strong></td>
       <td>NoSQL (DynamoDB) does not support foreign key constraints. Hence, The invalid job_id values can be inserted without validation, corrupting referential integrity. It has to perform two actions: inserting into table and validate, which is complex to implement and costly.</td>
