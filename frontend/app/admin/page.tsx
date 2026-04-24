@@ -6,7 +6,7 @@ import {
   Users, Briefcase, FileText, Settings, 
   BarChart3, PieChart, Activity, Search,
   Bell, ChevronRight, LogOut, ShieldCheck, Loader2,
-  Calendar, MapPin, Globe, Zap, Clock, X
+  Calendar, MapPin, Globe, Zap, Clock, X, Sparkles
 } from 'lucide-react';
 
 import { api } from '../lib/api';
@@ -419,66 +419,112 @@ export default function AdminDashboard() {
                               ) : (
                                 <div className="grid grid-cols-1 gap-3">
                                   {jobApps.map((app) => (
-                                    <div key={app.id} className="flex items-center justify-between p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group">
-                                       <div className="flex items-center gap-4">
-                                          <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center text-apple-bright-blue font-black text-xs">
-                                             {app.full_name.charAt(0)}
-                                          </div>
-                                          <div>
-                                             <div className="font-bold text-white text-sm">{app.full_name}</div>
-                                             <div className="text-[10px] text-white/30 font-medium">{app.email} • {new Date(app.submitted_at).toLocaleDateString('vi-VN')}</div>
-                                          </div>
+                                    <div key={app.id} className="flex flex-col p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group gap-4">
+                                       <div className="flex items-center justify-between">
+                                         <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-apple-blue/10 flex items-center justify-center text-apple-bright-blue font-black text-xs relative">
+                                               {app.full_name.charAt(0)}
+                                            </div>
+                                            <div>
+                                               <div className="font-bold text-white text-sm flex items-center gap-2">
+                                                 {app.full_name}
+                                               </div>
+                                               <div className="text-[10px] text-white/30 font-medium">{app.email} • {new Date(app.submitted_at).toLocaleDateString('vi-VN')}</div>
+                                            </div>
+                                         </div>
+
+                                         <div className="flex items-center gap-6">
+                                            {/* Status Selector */}
+                                            <div className="relative group/status">
+                                               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
+                                                  <div className={`w-1.5 h-1.5 rounded-full ${
+                                                    app.status === 'Accepted' ? 'bg-green-500' : 
+                                                    app.status === 'Rejected' ? 'bg-red-500' :
+                                                    app.status === 'Interviewing' ? 'bg-apple-blue' : 'bg-white/40'
+                                                  }`}></div>
+                                                  <span className="text-[9px] font-black uppercase tracking-widest text-white/60">{app.status}</span>
+                                               </div>
+                                               
+                                               <div className="absolute right-0 bottom-full mb-2 w-40 bg-[#121212] border border-white/10 rounded-2xl opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-20 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+                                                  {['Pending', 'Interviewing', 'Accepted', 'Rejected'].map((s) => (
+                                                    <button 
+                                                      key={s}
+                                                      onClick={() => handleUpdateStatus(job.id, app.id, s)}
+                                                      className="w-full text-[10px] font-black uppercase tracking-widest px-5 py-4 hover:bg-apple-blue/20 text-white/50 hover:text-white text-left transition-all border-b border-white/5 last:border-0 flex items-center gap-3"
+                                                    >
+                                                      <div className={`w-1.5 h-1.5 rounded-full ${
+                                                        s === 'Accepted' ? 'bg-green-500' : 
+                                                        s === 'Rejected' ? 'bg-red-500' :
+                                                        s === 'Interviewing' ? 'bg-apple-blue' : 'bg-white/40'
+                                                      }`}></div>
+                                                      {s}
+                                                    </button>
+                                                  ))}
+                                               </div>
+                                            </div>
+
+                                            {/* CV Link */}
+                                            <div className="flex items-center w-24 justify-end">
+                                              {app.cv_url ? (
+                                                <a 
+                                                  href={app.cv_url} 
+                                                  target="_blank" 
+                                                  rel="noopener noreferrer"
+                                                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-apple-blue text-white hover:bg-apple-bright-blue transition-all text-[9px] font-black uppercase tracking-widest whitespace-nowrap"
+                                                >
+                                                  <FileText size={14} />
+                                                  XEM CV
+                                                </a>
+                                              ) : (
+                                                <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic text-right">
+                                                  Lỗi file
+                                                </span>
+                                              )}
+                                            </div>
+                                         </div>
                                        </div>
 
-                                       <div className="flex items-center gap-6">
-                                          {/* Status Selector */}
-                                          <div className="relative group/status">
-                                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 cursor-pointer">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${
-                                                  app.status === 'Accepted' ? 'bg-green-500' : 
-                                                  app.status === 'Rejected' ? 'bg-red-500' :
-                                                  app.status === 'Interviewing' ? 'bg-apple-blue' : 'bg-white/40'
-                                                }`}></div>
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-white/60">{app.status}</span>
-                                             </div>
-                                             
-                                             <div className="absolute right-0 bottom-full mb-2 w-40 bg-[#121212] border border-white/10 rounded-2xl opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-20 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-                                                {['Pending', 'Interviewing', 'Accepted', 'Rejected'].map((s) => (
-                                                  <button 
-                                                    key={s}
-                                                    onClick={() => handleUpdateStatus(job.id, app.id, s)}
-                                                    className="w-full text-[10px] font-black uppercase tracking-widest px-5 py-4 hover:bg-apple-blue/20 text-white/50 hover:text-white text-left transition-all border-b border-white/5 last:border-0 flex items-center gap-3"
-                                                  >
-                                                    <div className={`w-1.5 h-1.5 rounded-full ${
-                                                      s === 'Accepted' ? 'bg-green-500' : 
-                                                      s === 'Rejected' ? 'bg-red-500' :
-                                                      s === 'Interviewing' ? 'bg-apple-blue' : 'bg-white/40'
-                                                    }`}></div>
-                                                    {s}
-                                                  </button>
-                                                ))}
-                                             </div>
-                                          </div>
+                                       {/* AI Analysis Panel */}
+                                       {app.ai_analysis ? (
+                                         <div className="mt-2 p-5 rounded-xl bg-purple-500/[0.05] border border-purple-500/20 space-y-4 animate-in fade-in slide-in-from-top-1 duration-500">
+                                            <div className="flex items-center justify-between">
+                                               <div className="flex items-center gap-2 text-purple-400">
+                                                  <Sparkles size={16} />
+                                                  <span className="text-[10px] font-black uppercase tracking-widest">
+                                                    AI-Powered Analysis
+                                                  </span>
+                                               </div>
+                                               <div className="flex items-center gap-2">
+                                                  <div className="text-[9px] font-bold text-white/40 uppercase">Match Score:</div>
+                                                  <div className="text-sm font-black text-purple-400">
+                                                    {app.ai_analysis.match_score}%
+                                                  </div>
+                                               </div>
+                                            </div>
 
-                                          {/* CV Link */}
-                                          <div className="flex items-center w-24 justify-end">
-                                            {app.cv_url ? (
-                                              <a 
-                                                href={app.cv_url} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-apple-blue text-white hover:bg-apple-bright-blue transition-all text-[9px] font-black uppercase tracking-widest whitespace-nowrap"
-                                              >
-                                                <FileText size={14} />
-                                                XEM CV
-                                              </a>
-                                            ) : (
-                                              <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest italic text-right">
-                                                Lỗi file
-                                              </span>
-                                            )}
-                                          </div>
-                                       </div>
+                                            <div className="space-y-4">
+                                               <div className="text-[11px] text-white/80 leading-relaxed bg-white/[0.02] p-3 rounded-lg border border-white/5 italic">
+                                                  &quot;{app.ai_analysis.summary}&quot;
+                                               </div>
+                                               
+                                               <div className="space-y-2">
+                                                  <div className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Kỹ năng bóc tách (AI Extracted)</div>
+                                                  <div className="flex flex-wrap gap-2">
+                                                     {app.ai_analysis.skills?.map((skill: string) => (
+                                                       <span key={skill} className="px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20 text-[9px] font-bold text-purple-300 uppercase tracking-tight">
+                                                          {skill}
+                                                       </span>
+                                                     ))}
+                                                  </div>
+                                               </div>
+                                            </div>
+                                         </div>
+                                       ) : (
+                                         <div className="mt-2 p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
+                                            <Loader2 size={14} className="text-white/20 animate-spin" />
+                                            <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Đang phân tích CV bởi Amazon AI...</span>
+                                         </div>
+                                       )}
                                     </div>
                                   ))}
                                 </div>

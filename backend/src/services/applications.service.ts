@@ -13,7 +13,20 @@ export class ApplicationsService {
       ORDER BY a.submitted_at DESC
     `;
     
+    console.log(`[DB Query - JOIN] Executing: ${query}`);
+
+    // Proving Index usage in JOIN
+    try {
+      const explainResult = await pool.query(`EXPLAIN ${query}`);
+      explainResult.rows.forEach(row => {
+        console.log(`[DB Index Proof - JOIN] ${row['QUERY PLAN']}`);
+      });
+    } catch (e) {
+      console.error('[DB Index Proof] Error running EXPLAIN:', e);
+    }
+
     const { rows } = await pool.query(query);
+    console.log(`[DB Result] Found ${rows.length} applications.`);
 
     // Generate signed URLs for CVs
     return Promise.all(rows.map(async (row) => {
@@ -43,7 +56,20 @@ export class ApplicationsService {
       ORDER BY a.submitted_at DESC
     `;
     
+    console.log(`[DB Query - JOIN] Executing: ${query} | JobID: ${jobId}`);
+
+    // Proving Index usage in JOIN by JobID
+    try {
+      const explainResult = await pool.query(`EXPLAIN ${query}`, [jobId]);
+      explainResult.rows.forEach(row => {
+        console.log(`[DB Index Proof - JOIN] ${row['QUERY PLAN']}`);
+      });
+    } catch (e) {
+      console.error('[DB Index Proof] Error running EXPLAIN:', e);
+    }
+
     const { rows } = await pool.query(query, [jobId]);
+    console.log(`[DB Result] Found ${rows.length} applications for job ${jobId}.`);
 
     return Promise.all(rows.map(async (row) => {
       if (row.cv_s3_key && process.env.S3_BUCKET) {

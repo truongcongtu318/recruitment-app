@@ -31,8 +31,17 @@ export async function initDB(): Promise<void> {
     console.log('[DB] Enabling pgcrypto extension...');
     await client.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
 
+    // ⚠️ DROP all tables to recreate with correct schema
+    console.log('[DB] ⚠️ Dropping all tables for clean rebuild...');
+    await client.query(`
+      DROP TABLE IF EXISTS applications CASCADE;
+      DROP TABLE IF EXISTS jobs CASCADE;
+      DROP TABLE IF EXISTS users CASCADE;
+    `);
+    console.log('[DB] ✅ All tables dropped.');
+
     // 1. Create Users
-    console.log('[DB] Ensuring users table exists...');
+    console.log('[DB] Creating users table...');
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -86,6 +95,13 @@ export async function initDB(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_jobs_level ON jobs(level);
       CREATE INDEX IF NOT EXISTS idx_app_job_id ON applications(job_id);
     `);
+
+    // 5. Migrations — add new columns to existing tables
+    console.log('[DB] Running column migrations...');
+    await client.query(`
+      ALTER TABLE applications ADD COLUMN IF NOT EXISTS ai_analysis JSONB;
+    `);
+    console.log('[DB] ✅ Column migration complete (ai_analysis JSONB).');
 
     await client.query('COMMIT');
     console.log('[DB] Database schema check complete.');

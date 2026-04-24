@@ -56,9 +56,11 @@ export class ApplyService {
       RETURNING id
     `;
 
+    console.log(`[DB Insert] Saving application for ${fullName} to RDS...`);
     const { rows } = await pool.query(query, [
       jobId, fullName, email, phone || '', experienceSummary || '', cvKey
     ]);
+    console.log(`[DB Result] Application saved with ID: ${rows[0].id}`);
 
     return { id: rows[0].id, cvKey };
   }

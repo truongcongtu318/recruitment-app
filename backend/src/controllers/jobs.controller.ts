@@ -18,7 +18,7 @@ const jobSchema = z.object({
 export class JobsController {
   async getJobs(req: Request, res: Response) {
     try {
-      const { mine } = req.query;
+      const { mine, level } = req.query;
       let userId: number | undefined;
 
       if (mine === 'true' && req.headers['authorization']) {
@@ -31,7 +31,11 @@ export class JobsController {
         } catch (e) { /* ignore token error for public view */ }
       }
 
-      const jobs = await jobsService.getAllJobs({ mine: mine === 'true', userId });
+      const jobs = await jobsService.getAllJobs({ 
+        mine: mine === 'true', 
+        userId, 
+        level: level as string 
+      });
       return res.json(jobs);
     } catch (err: any) {
       console.error('[JobsController] getJobs error:', err.message);

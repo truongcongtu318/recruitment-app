@@ -22,4 +22,10 @@ export interface Application {
   job_title: string;
   job_company: string;
   cv_url?: string;
+  ai_analysis?: {
+    match_score?: number;
+    summary?: string;
+    skills?: string[];
+    analyzed_at?: string;
+  };
 }

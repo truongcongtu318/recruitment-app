@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { initDB } from './config/db.js';
+import { startSQSWorker } from './workers/sqsWorker.js';
 import jobsRouter from './routes/jobs.js';
 import applyRouter from './routes/apply.js';
 import adminRouter from './routes/applications.js';
@@ -62,6 +63,9 @@ async function bootstrap() {
     // 2. Initialize DB and migrations in the background
     console.log('[DB] Connecting to database...');
     await initDB();
+
+    // 3. Start SQS Worker to consume AI analysis results
+    startSQSWorker();
   } catch (err: any) {
     console.error('❌ DATABASE INITIALIZATION FAILURE:', err.message);
     // Note: We don't exit(1) here to allow the container to stay alive 
