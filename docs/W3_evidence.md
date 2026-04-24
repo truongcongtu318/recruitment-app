@@ -18,6 +18,7 @@
   - [Instances and storages](#instances-and-storages)
   - [Database subnet group](#database-subnet-group)
   - [Disable public access](#disable-public-access)
+  - [AI workflow with Lambda, Textract, Comprehend, and SQS](#ai-workflow-with-lambda-textract-comprehend-and-sqs)
 - [4. Working Query Evidence](#4-working-query-evidence)
   - [JOIN operation](#join-operation)
   - [Indexing](#indexing)
@@ -139,6 +140,7 @@
 
 ## Security Groups in RDS
 ![alt text](../images/image-3.png)
+![alt text](../images/image-18.png)
 - Configured RDS security group to allow inbound traffic only from the ECS service security group on port 5432. This configuration enforces least privilege access and prevents unauthorized connections from external sources.
 
 ## Private subnets for RDS 
@@ -165,6 +167,13 @@
 ## Disable public access
 ![alt text](../images/image-10.png)
 - Disabled public access for the RDS instance ensures that all database traffic flows only through ECS services, preventing unauthorized external connections
+
+## AI workflow with Lambda, Textract, Comprehend, and SQS
+![alt text](../images/image-19.png)
+![alt text](../images/image-20.png)
+![alt text](../images/image-21.png)
+- After user uploads CV, Lambda is trigger by S3 event, call Textract and Comprehend to process pdf file and return related information to SQS messages.
+- Cloudwatch witnesses the CV process of Lambda and SQS recieves results.
 
 
 # 4. Working Query Evidence 
