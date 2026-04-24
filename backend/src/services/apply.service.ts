@@ -1,7 +1,7 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { pool } from '../config/db.js';
 
-const s3 = new S3Client({ region: process.env.AWS_REGION || 'ap-southeast-1' });
+const s3 = new S3Client({ region: process.env.AWS_REGION || 'us-west-2' });
 
 export class ApplyService {
   /**
@@ -27,16 +27,22 @@ export class ApplyService {
 
     // 2. Upload to S3
     if (process.env.S3_BUCKET) {
-      console.log(`[S3] Uploading to bucket: ${process.env.S3_BUCKET} | Key: ${cvKey}`);
+      console.log(`[S3] Starting upload to ${process.env.S3_BUCKET}...`);
       try {
-        await s3.send(new PutObjectCommand({
+        const uploadResult = await s3.send(new PutObjectCommand({
           Bucket: process.env.S3_BUCKET,
           Key: cvKey,
           Body: file.buffer,
           ContentType: file.mimetype,
         }));
+        console.log(`[S3] Upload successful. RequestId: ${uploadResult.$metadata.requestId}`);
       } catch (err: any) {
-        console.error('[S3 Error]', err);
+        console.error('[S3 Error Details]:', {
+          code: err.code,
+          message: err.message,
+          bucket: process.env.S3_BUCKET,
+          region: process.env.AWS_REGION
+        });
         throw new Error(`S3_UPLOAD_FAILED: ${err.message}`);
       }
     } else {

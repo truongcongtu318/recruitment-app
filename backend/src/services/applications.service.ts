@@ -2,7 +2,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { pool } from '../config/db.js';
 
-const s3 = new S3Client({ region: process.env.AWS_REGION || 'ap-southeast-1' });
+const s3 = new S3Client({ region: process.env.AWS_REGION || 'us-west-2' });
 
 export class ApplicationsService {
   async getAllApplications() {
