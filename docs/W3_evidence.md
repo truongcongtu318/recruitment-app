@@ -7,6 +7,8 @@
 # Evidence Pack
 - [Evidence Pack](#evidence-pack)
 - [1. Cover](#1-cover)
+  - [Group information](#group-information)
+  - [AWS Diagrams in Week 3](#aws-diagrams-in-week-3)
 - [2. Data Access Pattern Log](#2-data-access-pattern-log)
 - [3. Deployment Evidence](#3-deployment-evidence)
   - [Encryption in RDS](#encryption-in-rds)
@@ -27,6 +29,7 @@
 - [7. Negative Security Test](#7-negative-security-test)
 
 # 1. Cover
+## Group information 
 - Group number: 12
 - Member names
   - Ngô Nguyên Phúc
@@ -41,6 +44,13 @@
   - Nguyễn Trúc Quỳnh
 - Selected Database: **RDS Postgres / Relational**
 
+## AWS Diagrams in Week 3
+![alt text](images/image-22.png)
+- Demonstrate how the VPC endpoints including gateway endpoints and interface endpoints are used in the diagrams compared to week 2
+
+
+![alt text](images/image-23.png)
+- Adjust the actions and resources for each role to ensure least privilege, avoiding providing too many or too few resources and actions
 
 
 # 2. Data Access Pattern Log 
@@ -131,47 +141,47 @@
 
 # 3. Deployment Evidence 
 ## Encryption in RDS
-![alt text](../images/image-2.png)
+![alt text](images/image-2.png)
 - Enabled encryption using AWS-managed KMS key (aws/rds) to reduce key management overhead since currently we have no compliance mandate to obey and we want rotation to be automatic. 
 
 ## Multi-AZs RDS in RDS
-![alt text](../images/image-6.png)
+![alt text](images/image-6.png)
 - Enabled Multi-AZ with RDS for automatic failover to a standby replica in a different Availability Zone in case of infrastructure failure without requiring manual intervention, therby ensuring high availability and minimizing downtime 
 
 ## Security Groups in RDS
-![alt text](../images/image-3.png)
-![alt text](../images/image-18.png)
+![alt text](images/image-3.png)
+![alt text](images/image-18.png)
 - Configured RDS security group to allow inbound traffic only from the ECS service security group on port 5432. This configuration enforces least privilege access and prevents unauthorized connections from external sources.
 
 ## Private subnets for RDS 
-![alt text](../images/image-4.png)
+![alt text](images/image-4.png)
 - RDS is placed in private subnets, which are different from subnets of ECS cluster, to seperate tiers and prevent direct internet exposure.
 
 ## Backups database
-![alt text](../images/image-5.png)
+![alt text](images/image-5.png)
 - Enabled automated backups with a 7-day retention period for point-in-time recovery. This configuration allows restoring the database to any specific timestamp within the retention window in case of data corruption
 
 ## Snapshot
-![alt text](../images/image-8.png)
+![alt text](images/image-8.png)
 - Created a snapshots before any changes to provide a reliable rollback point, ensuring that we can quickly restore the database to a good state if deployment issues occur
 
 ## Instances and storages
-![alt text](../images/image-7.png)
+![alt text](images/image-7.png)
 - Selected `db.m7g.large` instead of smaller instances like t3.micro to be able to handle expected workload and avoid CPU/memory bottlenecks when there are greate number of concurrent requests.
 - Selected io2 over general-purpose SSD (gp3) to ensure predictable IOPS and durability for production workloads.
 
 ## Database subnet group
-![alt text](../images/image-9.png)
+![alt text](images/image-9.png)
 - Configured a DB subnet group with private subnets on two different Availability Zones, supporting Multi-AZ deployment for RDS to avoid single points of failure
 
 ## Disable public access
-![alt text](../images/image-10.png)
+![alt text](images/image-10.png)
 - Disabled public access for the RDS instance ensures that all database traffic flows only through ECS services, preventing unauthorized external connections
 
 ## AI workflow with Lambda, Textract, Comprehend, and SQS
-![alt text](../images/image-19.png)
-![alt text](../images/image-20.png)
-![alt text](../images/image-21.png)
+![alt text](images/image-19.png)
+![alt text](images/image-20.png)
+![alt text](images/image-21.png)
 - After user uploads CV, Lambda is trigger by S3 event, call Textract and Comprehend to process pdf file and return related information to SQS messages.
 - Cloudwatch witnesses the CV process of Lambda and SQS recieves results.
 
@@ -184,7 +194,7 @@
   JOIN jobs j ON a.job_id = j.id
   ORDER BY a.submitted_at DESC
 ```
-![alt text](../images/image-15.png)
+![alt text](images/image-15-1.png)
 - The query returns application information along with job metadata and sorts results by `submitted_at DESC` by using JOIN operation. 
 
 ## Indexing
@@ -193,24 +203,24 @@
   WHERE level = $1 
   ORDER BY created_at DESC;
 ```
-![alt text](../images/image-16.png)
+![alt text](images/image-15-2.png)
 - Indexing on jobs.level can improve query performance with high filter speed.
 
 
 # 5. Lambda, Textract and Comprehend Evidence 
-![alt text](../images/image-13.png)
+![alt text](images/image-13.png)
 
-![alt text](../images/image-14.png)
+![alt text](images/image-14.png)
 - After uploading CV into bucket through application, Lambda triggers event and get CV from bucket S3, send to Textract to get text, then Comprehend get information based on keywords and send result to SQS
 
 # 6. VPC and Networking Evidence
-![alt text](../images/image-11.png)
+![alt text](images/image-11.png)
 - Public subnets can access to the internet through internet gateway
 - 4 private subnets can only access local services through local, and S3 through S3 gateway 
 
 
 
 # 7. Negative Security Test
-![alt text](../images/image-12.png)
+![alt text](images/image-12.png)
 - Since PubliclyAccessible=false and the database is in private subnet of VPC, RDS is not exposed to the internet. External clients cannot connect to the database if they are not in the inbound rules of security group for RDS
   
